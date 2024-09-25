@@ -38,7 +38,7 @@ let explosion = { active: false, x: 0, y: 0, frames: 0, maxFrames: 10 };
 // High Score from localStorage
 let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
 
-// Handle user input for movement
+// Handle user input for movement (keyboard and touch)
 document.addEventListener('keydown', (event) => {
     if (event.code === 'ArrowUp') {
         player.isFloating = true; // Jump when arrow up is pressed
@@ -62,6 +62,31 @@ document.addEventListener('keyup', (event) => {
         player.movingRight = false; // Stop moving right
     }
 });
+
+// Touch event listeners for mobile control
+canvas.addEventListener('touchstart', handleTouchStart, false);
+canvas.addEventListener('touchmove', handleTouchMove, false);
+
+let touchStartX = 0; // Track where the user touches the screen
+
+function handleTouchStart(event) {
+    const firstTouch = event.touches[0];
+    touchStartX = firstTouch.clientX; // Get the initial touch position
+}
+
+function handleTouchMove(event) {
+    const touchX = event.touches[0].clientX; // Get the current touch position
+
+    // If the touch moves left or right, move the player accordingly
+    if (touchX < touchStartX && player.x > 0) {
+        player.x -= player.speed; // Move left
+    } else if (touchX > touchStartX && player.x + player.width < canvas.width) {
+        player.x += player.speed; // Move right
+    }
+    
+    // Update touch start position
+    touchStartX = touchX;
+}
 
 // Obstacle variables
 let obstacles = [];
@@ -229,7 +254,9 @@ function detectCollisions() {
 let score = 0;
 let lives = 3;
 
-// Draw the player's score, lives, and high score
+// Draw the player's
+
+ score, lives, and high score
 function drawHUD() {
     ctx.fillStyle = 'white'; // Change HUD text to white for visibility
     ctx.font = '20px Arial';
@@ -266,6 +293,22 @@ function updatePlayer() {
         player.x += player.speed; // Move right
     }
 }
+
+// Resize canvas dynamically based on window size
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Adjust player size dynamically for mobile
+    player.width = canvas.width * 0.1;
+    player.height = canvas.width * 0.1;
+}
+
+// Call the resize function when the window is resized
+window.addEventListener('resize', resizeCanvas);
+
+// Initial canvas resize when the game loads
+resizeCanvas();
 
 // Draw the game objects
 function draw() {
