@@ -335,7 +335,13 @@ function updatePlayer() {
 }
 
 // Main game loop
-function gameLoop() {
+function gameLoop()
+    // Update game state
+    // Draw the frame
+
+    requestAnimationFrame(gameLoop); // Ensure this is called at the end
+}
+
     frames++;
     updatePlayer();
     updateObstacles();
