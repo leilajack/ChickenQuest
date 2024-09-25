@@ -2,7 +2,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Load images and sounds
+// Load images for player, obstacles, coins, power-ups, and background
 const playerImg = new Image();
 playerImg.src = 'assets/player.png';
 
@@ -15,29 +15,34 @@ coinImg.src = 'assets/coin.png';
 const backgroundImg = new Image();
 backgroundImg.src = 'assets/barn.png';
 
-const speedBoostImg = new Image();
-speedBoostImg.src = 'assets/speedBoost.png';
-
+// Load power-up images
 const shieldImg = new Image();
 shieldImg.src = 'assets/shield.png';
 
-const coinSound = new Audio('assets/Coinsound.mp3');
-const cluckSound = new Audio('assets/cluck.mp3');
-const obstacleHitSound = new Audio('assets/EagleScream.mp3');
+const speedBoostImg = new Image();
+speedBoostImg.src = 'assets/speedBoost.png';
+
+// Load sounds
+const cluckSound = new Audio('assets/cluck.mp3'); // Sound when player loses a life
+const coinSound = new Audio('assets/Coinsound.mp3'); // Sound when player collects a coin
+const obstacleHitSound = new Audio('assets/EagleScream.mp3'); // Sound when obstacle hits player
 
 // Game variables
 let player = {
     x: 0,
     y: 0,
-    width: 75,  // Adjusted width
-    height: 75, // Adjusted height
+    width: 50,
+    height: 50,
     speed: 5,
+    originalSpeed: 5, // For resetting after speed boost
     dy: 0,
-    gravity: 0.3,
+    gravity: 0.5,
+    lift: -10,
+    maxFallSpeed: 10,
     isFloating: false,
     movingLeft: false,
     movingRight: false,
-    isShielded: false,
+    isShielded: false
 };
 
 let score = 0;
@@ -46,153 +51,244 @@ let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getIte
 let obstacles = [];
 let coins = [];
 let powerUps = [];
-
-// Power-up types
-const POWER_UP_TYPES = {
-    SPEED_BOOST: 'speed',
-    SHIELD: 'shield'
-};
+let frames = 0;
 
 // Resize canvas to fit the window
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    // Reset player dimensions based on canvas size
-    player.width = canvas.width * 0.1; // 10% of canvas width
-    player.height = canvas.height * 0.1; // 10% of canvas height
+    // Adjust player size based on canvas size
+    player.width = canvas.width * 0.08;
+    player.height = canvas.width * 0.08;
+
+    // Reset player position
+    player.x = canvas.width / 2 - player.width / 2;
+    player.y = canvas.height - player.height - 10;
 }
 
-// Initial setup
-function init() {
-    player.x = canvas.width / 2 - player.width / 2;
-    player.y = canvas.height - player.height - 10; // Keep player above the bottom
-    resizeCanvas();
-}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas(); // Initial call
+
+// Handle keyboard input for desktop
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowUp' || event.key === 'Up') {
+        player.isFloating = true;
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'Left') {
+        player.movingLeft = true;
+    }
+    if (event.key === 'ArrowRight' || event.key === 'Right') {
+        player.movingRight = true;
+    }
+});
+
+document.addEventListener('keyup', (event) => {
+    if (event.key === 'ArrowUp' || event.key === 'Up') {
+        player.isFloating = false;
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'Left') {
+        player.movingLeft = false;
+    }
+    if (event.key === 'ArrowRight' || event.key === 'Right') {
+        player.movingRight = false;
+    }
+});
+
+// Touch event listeners for mobile control
+let lastTouchTime = 0;
+
+canvas.addEventListener('touchstart', (event) => {
+    event.preventDefault();
+    const touchX = event.touches[0].clientX;
+    const currentTime = new Date().getTime();
+
+    // Check for double-tap to jump
+    if (currentTime - lastTouchTime < 300) {
+        player.isFloating = true;
+    }
+    lastTouchTime = currentTime;
+
+    if (touchX < canvas.width / 2) {
+        player.movingLeft = true;
+    } else {
+        player.movingRight = true;
+    }
+}, false);
+
+canvas.addEventListener('touchend', () => {
+    player.movingLeft = false;
+    player.movingRight = false;
+    player.isFloating = false;
+}, false);
 
 // Function to create obstacles
 function createObstacle() {
-    const width = 50 + Math.random() * 30; 
-    const xPosition = Math.random() * (canvas.width - width);
+    let size = 50 + Math.random() * 30; // Size varies between 50 and 80
+    size *= 1.25; // Increase size by 25%
+    let xPosition = Math.random() * (canvas.width - size);
     obstacles.push({
         x: xPosition,
-        y: -20,
-        width: width * 1.25, 
-        height: 62.5, // Adjusted height for 25% increase
-        speed: 1.5 + score / 100 
+        y: -size,
+        width: size,
+        height: size,
+        speed: 2 + score / 100 // Increase speed as score increases
     });
 }
 
-// Function to create coins
-function createCoin() {
-    const xPosition = Math.random() * canvas.width;
-    coins.push({
-        x: xPosition,
-        y: -20,
-        radius: 25, // Adjusted radius for better visibility
-        speedY: 2,
-    });
-}
-
-// Function to create power-ups
-function createPowerUp() {
-    const type = Math.random() < 0.5 ? POWER_UP_TYPES.SPEED_BOOST : POWER_UP_TYPES.SHIELD;
-    const xPosition = Math.random() * (canvas.width - 50);
-    powerUps.push({
-        x: xPosition,
-        y: -20,
-        type: type,
-        width: 40, // Adjusted width
-        height: 40  // Adjusted height
-    });
-}
-
-// Update functions
+// Update obstacles
 function updateObstacles() {
-    if (Math.random() < 0.02) createObstacle(); 
+    if (frames % 100 === 0) {
+        createObstacle();
+    }
     obstacles.forEach((obstacle, index) => {
         obstacle.y += obstacle.speed;
-        if (obstacle.y > canvas.height) obstacles.splice(index, 1);
+        if (obstacle.y > canvas.height) {
+            obstacles.splice(index, 1);
+            score += 5;
+            createCoin();
+            // No sound when obstacle leaves the screen
+        }
     });
 }
 
-function updateCoins() {
-    if (Math.random() < 0.05) createCoin(); 
-    coins.forEach((coin, index) => {
-        coin.y += coin.speedY;
-        if (coin.y > canvas.height) coins.splice(index, 1);
-    });
-}
-
-function updatePowerUps() {
-    if (Math.random() < 0.01) createPowerUp(); 
-    powerUps.forEach((powerUp, index) => {
-        powerUp.y += 2; 
-        if (powerUp.y > canvas.height) powerUps.splice(index, 1);
-    });
-}
-
-// Draw functions
+// Draw obstacles
 function drawObstacles() {
     obstacles.forEach(obstacle => {
         ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
     });
 }
 
-function drawCoins() {
-    coins.forEach(coin => {
-        ctx.drawImage(coinImg, coin.x, coin.y, coin.radius * 2, coin.radius * 2);
+// Function to create coins
+function createCoin() {
+    let xPosition = Math.random() * (canvas.width - 40);
+    coins.push({
+        x: xPosition,
+        y: -40,
+        width: 40,
+        height: 40,
+        speed: 3
     });
 }
 
+// Update coins
+function updateCoins() {
+    coins.forEach((coin, index) => {
+        coin.y += coin.speed;
+        if (coin.y > canvas.height) {
+            coins.splice(index, 1);
+        }
+    });
+}
+
+// Draw coins
+function drawCoins() {
+    coins.forEach(coin => {
+        ctx.drawImage(coinImg, coin.x, coin.y, coin.width, coin.height);
+    });
+}
+
+// Power-up types
+const POWER_UP_TYPES = {
+    SHIELD: 'shield',
+    SPEED_BOOST: 'speedBoost'
+};
+
+// Function to create power-ups
+function createPowerUp() {
+    let xPosition = Math.random() * (canvas.width - 40);
+    let type = Math.random() < 0.5 ? POWER_UP_TYPES.SHIELD : POWER_UP_TYPES.SPEED_BOOST;
+    powerUps.push({
+        x: xPosition,
+        y: -40,
+        width: 40,
+        height: 40,
+        speed: 2,
+        type: type
+    });
+}
+
+// Update power-ups
+function updatePowerUps() {
+    if (frames % 500 === 0) { // Adjust frequency as needed
+        createPowerUp();
+    }
+    powerUps.forEach((powerUp, index) => {
+        powerUp.y += powerUp.speed;
+        if (powerUp.y > canvas.height) {
+            powerUps.splice(index, 1);
+        }
+    });
+}
+
+// Draw power-ups
 function drawPowerUps() {
     powerUps.forEach(powerUp => {
-        if (powerUp.type === POWER_UP_TYPES.SPEED_BOOST) {
-            ctx.drawImage(speedBoostImg, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
-        } else if (powerUp.type === POWER_UP_TYPES.SHIELD) {
-            ctx.drawImage(shieldImg, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
-        }
+        let img = powerUp.type === POWER_UP_TYPES.SHIELD ? shieldImg : speedBoostImg;
+        ctx.drawImage(img, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
     });
 }
 
 // Collision detection
 function detectCollisions() {
+    // Check collision with obstacles
     obstacles.forEach((obstacle, index) => {
-        if (player.x < obstacle.x + obstacle.width && player.x + player.width > obstacle.x &&
-            player.y < obstacle.y + obstacle.height && player.y + player.height > obstacle.y) {
-            if (!player.isShielded) {
+        if (player.x + 10 < obstacle.x + obstacle.width - 10 &&
+            player.x + player.width - 10 > obstacle.x + 10 &&
+            player.y + 10 < obstacle.y + obstacle.height - 10 &&
+            player.y + player.height - 10 > obstacle.y + 10) {
+
+            if (player.isShielded) {
+                obstacles.splice(index, 1);
+                // Shield absorbs the hit, no life lost
+            } else {
+                obstacles.splice(index, 1);
                 lives -= 1;
-                cluckSound.play();
+                obstacleHitSound.play(); // Play eagle scream sound when player is hit
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('highScore', highScore);
+                }
                 if (lives <= 0) {
                     alert("Game Over! Final Score: " + score);
                     document.location.reload();
                 }
-            } else {
-                obstacles.splice(index, 1);
             }
         }
     });
 
+    // Check collision with coins
     coins.forEach((coin, index) => {
-        if (player.x < coin.x + coin.radius * 2 && player.x + player.width > coin.x &&
-            player.y < coin.y + coin.radius * 2 && player.y + player.height > coin.y) {
-            score += 10;
-            coinSound.play();
+        if (player.x < coin.x + coin.width &&
+            player.x + player.width > coin.x &&
+            player.y < coin.y + coin.height &&
+            player.y + player.height > coin.y) {
+
             coins.splice(index, 1);
+            score += 10;
+            coinSound.play(); // Play coin sound when player collects a coin
         }
     });
 
+    // Check collision with power-ups
     powerUps.forEach((powerUp, index) => {
-        if (player.x < powerUp.x + powerUp.width && player.x + player.width > powerUp.x &&
-            player.y < powerUp.y + powerUp.height && player.y + player.height > powerUp.y) {
-            if (powerUp.type === POWER_UP_TYPES.SPEED_BOOST) {
-                player.speed *= 1.5; 
-                setTimeout(() => player.speed /= 1.5, 5000); 
-            } else if (powerUp.type === POWER_UP_TYPES.SHIELD) {
-                player.isShielded = true; 
-                setTimeout(() => player.isShielded = false, 5000); 
-            }
+        if (player.x < powerUp.x + powerUp.width &&
+            player.x + player.width > powerUp.x &&
+            player.y < powerUp.y + powerUp.height &&
+            player.y + player.height > powerUp.y) {
+
             powerUps.splice(index, 1);
+            if (powerUp.type === POWER_UP_TYPES.SHIELD) {
+                player.isShielded = true;
+                setTimeout(() => {
+                    player.isShielded = false;
+                }, 5000); // Shield lasts for 5 seconds
+            } else if (powerUp.type === POWER_UP_TYPES.SPEED_BOOST) {
+                player.speed *= 1.5;
+                setTimeout(() => {
+                    player.speed = player.originalSpeed;
+                }, 5000); // Speed boost lasts for 5 seconds
+            }
         }
     });
 }
@@ -201,25 +297,46 @@ function detectCollisions() {
 function drawHUD() {
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
-    ctx.fillText("Score: " + score, 10, 20);
-    ctx.fillText("Lives: " + lives, 10, 50);
-    ctx.fillText("High Score: " + highScore, 10, 80);
+    ctx.fillText("Score: " + score, 10, 30);
+    ctx.fillText("Lives: " + lives, 10, 60);
+    ctx.fillText("High Score: " + highScore, 10, 90);
+
+    if (player.isShielded) {
+        ctx.fillText("Shield Active", canvas.width - 150, 30);
+    }
 }
 
-// Update player movement
+// Update player movement and gravity
 function updatePlayer() {
-    if (player.isFloating) player.dy = -player.speed; // Jump action
-    else player.dy += player.gravity;
+    if (player.isFloating) {
+        player.dy = player.lift;
+    } else {
+        player.dy += player.gravity;
+    }
 
+    player.dy = Math.min(player.dy, player.maxFallSpeed);
     player.y += player.dy;
-    if (player.y > canvas.height - player.height) player.y = canvas.height - player.height;
-    if (player.y < 0) player.y = 0;
-    if (player.movingLeft && player.x > 0) player.x -= player.speed;
-    if (player.movingRight && player.x + player.width < canvas.width) player.x += player.speed;
+
+    // Keep player within canvas bounds
+    if (player.y > canvas.height - player.height) {
+        player.y = canvas.height - player.height;
+        player.dy = 0;
+    }
+    if (player.y < 0) {
+        player.y = 0;
+        player.dy = 0;
+    }
+    if (player.movingLeft && player.x > 0) {
+        player.x -= player.speed;
+    }
+    if (player.movingRight && player.x + player.width < canvas.width) {
+        player.x += player.speed;
+    }
 }
 
 // Main game loop
 function gameLoop() {
+    frames++;
     updatePlayer();
     updateObstacles();
     updateCoins();
@@ -233,9 +350,9 @@ function gameLoop() {
     drawPowerUps();
     ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
     drawHUD();
+
     requestAnimationFrame(gameLoop);
 }
 
 // Start the game
-init();
 gameLoop();
