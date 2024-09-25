@@ -44,7 +44,7 @@ let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getIte
 
 // Obstacle variables
 let obstacles = [];
-let obstacleFrequency = 300; // Slower obstacle frequency
+let obstacleFrequency = 300; 
 let obstacleSpeed = 1.5;
 let frames = 0;
 let obstacleCount = 1;
@@ -94,13 +94,13 @@ canvas.addEventListener('touchend', (event) => {
 // Function to create obstacles
 function createObstacle() {
     for (let i = 0; i < obstacleCount; i++) {
-        let width = 40;
+        let width = 50 + Math.random() * 30; // Vary obstacle width from 50 to 80
         let xPosition = Math.random() * (canvas.width - width);
         obstacles.push({
             x: xPosition,
             y: -20,
-            width: width,
-            height: 40,
+            width: width * 1.25, // Increase size by 25%
+            height: 50 * 1.25, // Increase height by 25%
             speed: obstacleSpeed
         });
     }
@@ -109,9 +109,9 @@ function createObstacle() {
 // Update obstacles
 function updateObstacles() {
     frames++;
-    if (score % 100 === 0 && score > 0) { // Slowed down difficulty increase
-        obstacleSpeed += 0.025;
-        obstacleFrequency = Math.max(100, obstacleFrequency - 10); // Slower increase
+    if (score % 80 === 0 && score > 0) { // Start difficulty increase sooner
+        obstacleSpeed += 0.05;
+        obstacleFrequency = Math.max(100, obstacleFrequency - 5); // Slower increase
         obstacleCount = Math.min(5, obstacleCount + 1);
     }
     if (frames % obstacleFrequency === 0) createObstacle();
@@ -249,6 +249,8 @@ function gameLoop() {
     updateObstacles();
     updateCoins();
     detectCollisions();
+
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
     drawObstacles();
