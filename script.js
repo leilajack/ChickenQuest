@@ -20,40 +20,14 @@ const jumpSound = new Audio();
 playerImg.src = 'assets/player.png';
 obstacleImg.src = 'assets/obstacle.png';
 coinImg.src = 'assets/coin.png';
-backgroundImg.src = 'assets/barn.png'; // If 'barn.png' was capitalized before
+backgroundImg.src = 'assets/barn.png';
 shieldImg.src = 'assets/shield.png';
-speedBoostImg.src = 'assets/speedboost.png'; // Changed from 'speedBoost.png' to 'speedboost.png'
+speedBoostImg.src = 'assets/speedboost.png';
 
 cluckSound.src = 'assets/cluck.mp3';
-coinSound.src = 'assets/coinsound.mp3'; // Changed from 'Coinsound.mp3' to 'coinsound.mp3'
-obstacleHitSound.src = 'assets/eaglescream.mp3'; // Changed from 'EagleScream.mp3' to 'eaglescream.mp3'
-jumpSound.src = 'assets/jump.mp3'; // Changed from 'Jump.mp3' to 'jump.mp3'
-
-// Asset loading
-let assetsLoaded = 0;
-const totalAssets = 10; // Update if necessary
-
-function assetLoaded() {
-    assetsLoaded++;
-    if (assetsLoaded === totalAssets) {
-        // All assets are loaded, enable the start button
-        document.getElementById('startButton').disabled = false;
-        document.getElementById('loadingText').style.display = 'none';
-    }
-}
-
-// Set up event listeners for asset loading
-playerImg.onload = assetLoaded;
-obstacleImg.onload = assetLoaded;
-coinImg.onload = assetLoaded;
-backgroundImg.onload = assetLoaded;
-shieldImg.onload = assetLoaded;
-speedBoostImg.onload = assetLoaded;
-
-cluckSound.addEventListener('canplaythrough', assetLoaded, false);
-coinSound.addEventListener('canplaythrough', assetLoaded, false);
-obstacleHitSound.addEventListener('canplaythrough', assetLoaded, false);
-jumpSound.addEventListener('canplaythrough', assetLoaded, false);
+coinSound.src = 'assets/coinsound.mp3';
+obstacleHitSound.src = 'assets/eaglescream.mp3';
+jumpSound.src = 'assets/jump.mp3';
 
 // Game variables
 let player = {
@@ -189,7 +163,9 @@ function updateObstacles() {
 // Draw obstacles
 function drawObstacles() {
     obstacles.forEach(obstacle => {
-        ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        if (obstacleImg.complete) {
+            ctx.drawImage(obstacleImg, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
     });
 }
 
@@ -218,7 +194,9 @@ function updateCoins() {
 // Draw coins
 function drawCoins() {
     coins.forEach(coin => {
-        ctx.drawImage(coinImg, coin.x, coin.y, coin.width, coin.height);
+        if (coinImg.complete) {
+            ctx.drawImage(coinImg, coin.x, coin.y, coin.width, coin.height);
+        }
     });
 }
 
@@ -259,7 +237,9 @@ function updatePowerUps() {
 function drawPowerUps() {
     powerUps.forEach(powerUp => {
         let img = powerUp.type === POWER_UP_TYPES.SHIELD ? shieldImg : speedBoostImg;
-        ctx.drawImage(img, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+        if (img.complete) {
+            ctx.drawImage(img, powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+        }
     });
 }
 
@@ -278,7 +258,9 @@ function detectCollisions() {
             } else {
                 obstacles.splice(index, 1);
                 lives -= 1;
-                obstacleHitSound.play(); // Play eagle scream sound when player is hit
+                if (obstacleHitSound.readyState >= 2) {
+                    obstacleHitSound.play(); // Play eagle scream sound when player is hit
+                }
                 if (score > highScore) {
                     highScore = score;
                     localStorage.setItem('highScore', highScore);
@@ -300,7 +282,9 @@ function detectCollisions() {
 
             coins.splice(index, 1);
             score += 10;
-            coinSound.play(); // Play coin sound when player collects a coin
+            if (coinSound.readyState >= 2) {
+                coinSound.play(); // Play coin sound when player collects a coin
+            }
         }
     });
 
@@ -378,22 +362,19 @@ function gameLoop() {
     detectCollisions();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    if (backgroundImg.complete) {
+        ctx.drawImage(backgroundImg, 0, 0, canvas.width, canvas.height);
+    }
     drawObstacles();
     drawCoins();
     drawPowerUps();
-    ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    if (playerImg.complete) {
+        ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+    }
     drawHUD();
 
     requestAnimationFrame(gameLoop);
 }
 
-// Start the game after the user clicks the start button
-document.getElementById('startButton').addEventListener('click', () => {
-    // Hide the start button and loading text
-    document.getElementById('startScreen').style.display = 'none';
-    // Start the game loop if all assets are loaded
-    if (assetsLoaded === totalAssets) {
-        gameLoop();
-    }
-});
+// Start the game immediately
+gameLoop();
