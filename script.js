@@ -14,6 +14,7 @@ const speedBoostImg = new Image();
 const cluckSound = new Audio();
 const coinSound = new Audio();
 const obstacleHitSound = new Audio();
+const jumpSound = new Audio();
 
 // Asset sources
 playerImg.src = 'assets/player.png';
@@ -26,16 +27,18 @@ speedBoostImg.src = 'assets/speedBoost.png';
 cluckSound.src = 'assets/cluck.mp3';
 coinSound.src = 'assets/Coinsound.mp3';
 obstacleHitSound.src = 'assets/EagleScream.mp3';
+jumpSound.src = 'assets/Jump.mp3'; // Added jump sound
 
 // Asset loading
 let assetsLoaded = 0;
-const totalAssets = 9; // Total number of assets to load
+const totalAssets = 10; // Updated total number of assets
 
 function assetLoaded() {
     assetsLoaded++;
     if (assetsLoaded === totalAssets) {
-        // All assets are loaded, start the game
-        gameLoop();
+        // All assets are loaded, enable the start button
+        document.getElementById('startButton').disabled = false;
+        document.getElementById('loadingText').style.display = 'none';
     }
 }
 
@@ -50,6 +53,7 @@ speedBoostImg.onload = assetLoaded;
 cluckSound.addEventListener('canplaythrough', assetLoaded, false);
 coinSound.addEventListener('canplaythrough', assetLoaded, false);
 obstacleHitSound.addEventListener('canplaythrough', assetLoaded, false);
+jumpSound.addEventListener('canplaythrough', assetLoaded, false);
 
 // Game variables
 let player = {
@@ -97,7 +101,10 @@ resizeCanvas(); // Initial call
 // Handle keyboard input for desktop
 document.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowUp' || event.key === 'Up') {
-        player.isFloating = true;
+        if (!player.isFloating) { // Prevent double jump
+            player.isFloating = true;
+            jumpSound.play(); // Play jump sound
+        }
     }
     if (event.key === 'ArrowLeft' || event.key === 'Left') {
         player.movingLeft = true;
@@ -129,7 +136,10 @@ canvas.addEventListener('touchstart', (event) => {
 
     // Check for double-tap to jump
     if (currentTime - lastTouchTime < 300) {
-        player.isFloating = true;
+        if (!player.isFloating) { // Prevent double jump
+            player.isFloating = true;
+            jumpSound.play(); // Play jump sound
+        }
     }
     lastTouchTime = currentTime;
 
@@ -378,5 +388,12 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Note: The gameLoop() function will be called after all assets are loaded, so no need to call it here.
-// The game starts automatically once all assets are loaded.
+// Start the game after the user clicks the start button
+document.getElementById('startButton').addEventListener('click', () => {
+    // Hide the start button and loading text
+    document.getElementById('startScreen').style.display = 'none';
+    // Start the game loop if all assets are loaded
+    if (assetsLoaded === totalAssets) {
+        gameLoop();
+    }
+});
