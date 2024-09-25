@@ -17,8 +17,8 @@ backgroundImg.src = 'assets/barn.png';
 
 // Load sounds
 const cluckSound = new Audio('assets/cluck.mp3'); 
-const coinSound = new Audio('assets/Coinsound.mp3'); // Sound for coin appearance
-const obstacleHitSound = new Audio('assets/EagleScream.mp3'); // Sound for obstacle hitting bottom
+const coinSound = new Audio('assets/coinsound.mp3'); // Sound for coin appearance
+const obstacleHitSound = new Audio('assets/eagleScream.mp3'); // Sound for obstacle hitting bottom
 
 // Set up the player object
 let player = {
