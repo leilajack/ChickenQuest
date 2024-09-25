@@ -16,22 +16,22 @@ const coinSound = new Audio();
 const obstacleHitSound = new Audio();
 const jumpSound = new Audio();
 
-// Asset sources
+// Asset sources (all filenames are now lowercase)
 playerImg.src = 'assets/player.png';
 obstacleImg.src = 'assets/obstacle.png';
 coinImg.src = 'assets/coin.png';
-backgroundImg.src = 'assets/barn.png';
+backgroundImg.src = 'assets/barn.png'; // If 'barn.png' was capitalized before
 shieldImg.src = 'assets/shield.png';
-speedBoostImg.src = 'assets/SpeedBoost.png';
+speedBoostImg.src = 'assets/speedboost.png'; // Changed from 'speedBoost.png' to 'speedboost.png'
 
 cluckSound.src = 'assets/cluck.mp3';
-coinSound.src = 'assets/Coinsound.mp3';
-obstacleHitSound.src = 'assets/EagleScream.mp3';
-jumpSound.src = 'assets/Jump.mp3'; // Added jump sound
+coinSound.src = 'assets/coinsound.mp3'; // Changed from 'Coinsound.mp3' to 'coinsound.mp3'
+obstacleHitSound.src = 'assets/eaglescream.mp3'; // Changed from 'EagleScream.mp3' to 'eaglescream.mp3'
+jumpSound.src = 'assets/jump.mp3'; // Changed from 'Jump.mp3' to 'jump.mp3'
 
 // Asset loading
 let assetsLoaded = 0;
-const totalAssets = 10; // Updated total number of assets
+const totalAssets = 10; // Update if necessary
 
 function assetLoaded() {
     assetsLoaded++;
@@ -225,7 +225,7 @@ function drawCoins() {
 // Power-up types
 const POWER_UP_TYPES = {
     SHIELD: 'shield',
-    SPEED_BOOST: 'speedBoost'
+    SPEED_BOOST: 'speedboost' // Changed to lowercase
 };
 
 // Function to create power-ups
