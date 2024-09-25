@@ -2,12 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simple Game</title>
-    <link rel="stylesheet" href="style.css"> <!-- Assuming you have a style.css -->
+    <title>Your Game Title</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <h1>Welcome to the Game!</h1>
+        <p id="loadingText">Loading assets, please wait...</p>
+        <button id="startButton" disabled>Start Game</button>
+    </div>
+
+    <!-- Game Canvas -->
     <canvas id="gameCanvas"></canvas>
+
+    <!-- Include the JavaScript file -->
     <script src="script.js"></script>
 </body>
 </html>
