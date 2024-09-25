@@ -4,28 +4,52 @@ const ctx = canvas.getContext('2d');
 
 // Load images for player, obstacles, coins, power-ups, and background
 const playerImg = new Image();
-playerImg.src = 'assets/player.png';
-
 const obstacleImg = new Image();
-obstacleImg.src = 'assets/obstacle.png';
-
 const coinImg = new Image();
-coinImg.src = 'assets/coin.png';
-
 const backgroundImg = new Image();
-backgroundImg.src = 'assets/barn.png';
-
-// Load power-up images
 const shieldImg = new Image();
-shieldImg.src = 'assets/shield.png';
-
 const speedBoostImg = new Image();
-speedBoostImg.src = 'assets/speedBoost.png';
 
 // Load sounds
-const cluckSound = new Audio('assets/cluck.mp3'); // Sound when player loses a life
-const coinSound = new Audio('assets/Coinsound.mp3'); // Sound when player collects a coin
-const obstacleHitSound = new Audio('assets/EagleScream.mp3'); // Sound when obstacle hits player
+const cluckSound = new Audio();
+const coinSound = new Audio();
+const obstacleHitSound = new Audio();
+
+// Asset sources
+playerImg.src = 'assets/player.png';
+obstacleImg.src = 'assets/obstacle.png';
+coinImg.src = 'assets/coin.png';
+backgroundImg.src = 'assets/barn.png';
+shieldImg.src = 'assets/shield.png';
+speedBoostImg.src = 'assets/speedBoost.png';
+
+cluckSound.src = 'assets/cluck.mp3';
+coinSound.src = 'assets/Coinsound.mp3';
+obstacleHitSound.src = 'assets/EagleScream.mp3';
+
+// Asset loading
+let assetsLoaded = 0;
+const totalAssets = 9; // Total number of assets to load
+
+function assetLoaded() {
+    assetsLoaded++;
+    if (assetsLoaded === totalAssets) {
+        // All assets are loaded, start the game
+        gameLoop();
+    }
+}
+
+// Set up event listeners for asset loading
+playerImg.onload = assetLoaded;
+obstacleImg.onload = assetLoaded;
+coinImg.onload = assetLoaded;
+backgroundImg.onload = assetLoaded;
+shieldImg.onload = assetLoaded;
+speedBoostImg.onload = assetLoaded;
+
+cluckSound.addEventListener('canplaythrough', assetLoaded, false);
+coinSound.addEventListener('canplaythrough', assetLoaded, false);
+obstacleHitSound.addEventListener('canplaythrough', assetLoaded, false);
 
 // Game variables
 let player = {
@@ -354,5 +378,5 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Start the game
-gameLoop();
+// Note: The gameLoop() function will be called after all assets are loaded, so no need to call it here.
+// The game starts automatically once all assets are loaded.
