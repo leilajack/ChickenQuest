@@ -50,6 +50,7 @@ let obstacleCount = 1;
 // Game variables
 let score = 0;
 let lives = 3;
+let lastTouchTime = 0;
 
 // Handle keyboard input for desktop
 document.addEventListener('keydown', (event) => {
@@ -67,19 +68,25 @@ document.addEventListener('keyup', (event) => {
 canvas.addEventListener('touchstart', (event) => {
     event.preventDefault();
     const touchX = event.touches[0].clientX;
+    const currentTime = new Date().getTime();
+
+    // Check for double-tap jump
+    if (currentTime - lastTouchTime < 300) {
+        player.isFloating = true; // Double-tap to jump
+    }
+    lastTouchTime = currentTime;
 
     if (touchX < canvas.width / 2) {
-        player.movingLeft = true;
+        player.movingLeft = true; // Move left
     } else {
-        player.movingRight = true;
+        player.movingRight = true; // Move right
     }
-    player.isFloating = true; // Jump when tapping the screen
 }, false);
 
 canvas.addEventListener('touchend', (event) => {
     player.movingLeft = false;
     player.movingRight = false;
-    player.isFloating = false;
+    player.isFloating = false; // Stop jumping
 }, false);
 
 // Function to create obstacles
