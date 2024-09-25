@@ -22,7 +22,7 @@ obstacleImg.src = 'assets/obstacle.png';
 coinImg.src = 'assets/coin.png';
 backgroundImg.src = 'assets/barn.png';
 shieldImg.src = 'assets/shield.png';
-speedBoostImg.src = 'assets/speedBoost.png';
+speedBoostImg.src = 'assets/SpeedBoost.png';
 
 cluckSound.src = 'assets/cluck.mp3';
 coinSound.src = 'assets/Coinsound.mp3';
