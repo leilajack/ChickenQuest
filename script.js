@@ -15,8 +15,10 @@ coinImg.src = 'assets/coin.png';
 const backgroundImg = new Image();
 backgroundImg.src = 'assets/barn.png'; 
 
-// Load clucking sound
+// Load sounds
 const cluckSound = new Audio('assets/cluck.mp3'); 
+const coinSound = new Audio('assets/Coinsound.mp3'); // Sound for coin appearance
+const obstacleHitSound = new Audio('assets/EagleScream.mp3'); // Sound for obstacle hitting bottom
 
 // Set up the player object
 let player = {
@@ -42,7 +44,7 @@ let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getIte
 
 // Obstacle variables
 let obstacles = [];
-let obstacleFrequency = 150;
+let obstacleFrequency = 300; // Slower obstacle frequency
 let obstacleSpeed = 1.5;
 let frames = 0;
 let obstacleCount = 1;
@@ -107,9 +109,9 @@ function createObstacle() {
 // Update obstacles
 function updateObstacles() {
     frames++;
-    if (score % 50 === 0 && score > 0) {
-        obstacleSpeed += 0.05;
-        obstacleFrequency = Math.max(50, obstacleFrequency - 1);
+    if (score % 100 === 0 && score > 0) { // Slowed down difficulty increase
+        obstacleSpeed += 0.025;
+        obstacleFrequency = Math.max(100, obstacleFrequency - 10); // Slower increase
         obstacleCount = Math.min(5, obstacleCount + 1);
     }
     if (frames % obstacleFrequency === 0) createObstacle();
@@ -118,7 +120,9 @@ function updateObstacles() {
         if (obstacle.y > canvas.height) {
             obstacles.splice(index, 1);
             score += 5;
+            coinSound.play(); // Play sound when coin appears
             createCoin(player.x + player.width / 2, player.y);
+            obstacleHitSound.play(); // Play sound when obstacle hits the bottom
         }
     });
 }
@@ -179,22 +183,28 @@ function drawExplosion() {
     if (explosion.frames > explosion.maxFrames) explosion.active = false;
 }
 
-// Collision detection
+// Collision detection with tighter space
 function detectCollisions() {
     obstacles.forEach((obstacle, index) => {
         if (player.x < obstacle.x + obstacle.width && player.x + player.width > obstacle.x &&
             player.y < obstacle.y + obstacle.height && player.y + player.height > obstacle.y) {
-            obstacles.splice(index, 1);
-            lives -= 1;
-            cluckSound.play();
-            triggerExplosion(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
-            if (score > highScore) {
-                highScore = score;
-                localStorage.setItem('highScore', highScore);
-            }
-            if (lives <= 0) {
-                alert("Game Over! Final Score: " + score);
-                document.location.reload();
+            // Tighter collision detection
+            const overlapX = player.x + player.width - obstacle.x;
+            const overlapY = player.y + player.height - obstacle.y;
+
+            if (overlapX > 10 && overlapY > 10) { // Require significant overlap to lose life
+                obstacles.splice(index, 1);
+                lives -= 1;
+                cluckSound.play();
+                triggerExplosion(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('highScore', highScore);
+                }
+                if (lives <= 0) {
+                    alert("Game Over! Final Score: " + score);
+                    document.location.reload();
+                }
             }
         }
     });
@@ -246,6 +256,8 @@ function gameLoop() {
     ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
     drawExplosion();
     drawHUD();
-    requestAnimationFrame(gameLoop);
+    requestAnimation
+
+Frame(gameLoop);
 }
 gameLoop();
