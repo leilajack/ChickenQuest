@@ -35,6 +35,9 @@ let player = {
 // Explosion effect variables
 let explosion = { active: false, x: 0, y: 0, frames: 0, maxFrames: 10 };
 
+// High Score from localStorage
+let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
+
 // Handle user input for movement
 document.addEventListener('keydown', (event) => {
     if (event.code === 'ArrowUp') {
@@ -155,16 +158,6 @@ function drawCoins() {
     });
 }
 
-// Detect coin collection by the player
-function detectCoinCollection() {
-    coins.forEach((coin, index) => {
-        if (player.x < coin.x + coin.radius && player.x + player.width > coin.x &&
-            player.y < coin.y + coin.radius && player.y + player.height > coin.y) {
-            coins[index].collected = true; // Mark coin as collected
-        }
-    });
-}
-
 // Explosion effect for when the player is hit
 function triggerExplosion(x, y) {
     explosion.active = true;
@@ -218,6 +211,12 @@ function detectCollisions() {
             cluckSound.play(); // Play cluck sound on hit
             triggerExplosion(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
 
+            // Update high score if necessary
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore); // Save new high score
+            }
+
             if (lives <= 0) {
                 alert("Game Over! Final Score: " + score); // Show game over
                 document.location.reload(); // Reload game
@@ -230,12 +229,13 @@ function detectCollisions() {
 let score = 0;
 let lives = 3;
 
-// Draw the player's score and lives
+// Draw the player's score, lives, and high score
 function drawHUD() {
     ctx.fillStyle = 'white'; // Change HUD text to white for visibility
     ctx.font = '20px Arial';
     ctx.fillText("Score: " + score, 10, 20); // Display score
     ctx.fillText("Lives: " + lives, 10, 50); // Display lives
+    ctx.fillText("High Score: " + highScore, 10, 80); // Display high score
 }
 
 // Update player movement and gravity
@@ -248,9 +248,7 @@ function updatePlayer() {
     }
 
     // Update player position
-    player.y += player
-
-.dy;
+    player.y += player.dy;
 
     // Prevent the player from going out of bounds
     if (player.y > canvas.height - player.height) {
@@ -281,7 +279,7 @@ function draw() {
     drawCoins();
     ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
     drawExplosion(); // Draw explosion effect
-    drawHUD();
+    drawHUD(); // Draw HUD with high score
 }
 
 // Main game loop
@@ -290,7 +288,6 @@ function gameLoop() {
     updateObstacles(); // Update falling obstacles
     updateCoins(); // Update bouncing coins
     detectCollisions(); // Check for collisions
-    detectCoinCollection(); // Check for coin collection
     draw(); // Render everything
 
     requestAnimationFrame(gameLoop); // Repeat game loop
