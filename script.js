@@ -7,14 +7,16 @@ const playerImg = new Image();
 playerImg.src = 'assets/player.png'; // Transparent background for player
 
 const obstacleImg = new Image();
+obstacleImg.src = 'assets/obstacle.png'; // Transparent background for obstacles
+
 const coinImg = new Image();
+coinImg.src = 'assets/coin.png'; // Transparent background for coins
+
 const backgroundImg = new Image();
-obstacleImg.src = 'assets/obstacle.png';
-coinImg.src = 'assets/coin.png';
-backgroundImg.src = 'assets/barn.png';
+backgroundImg.src = 'assets/barn.png'; // Barn background image
 
 // Load clucking sound
-const cluckSound = new Audio('assets/cluck.mp3');
+const cluckSound = new Audio('assets/cluck.mp3'); // Clucking sound
 
 // Set up the player object
 let player = {
@@ -35,7 +37,7 @@ let player = {
 // Explosion effect variables
 let explosion = { active: false, x: 0, y: 0, frames: 0, maxFrames: 10 };
 
-// High score from localStorage
+// High Score from localStorage
 let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
 
 // Obstacle variables
@@ -45,32 +47,68 @@ let obstacleSpeed = 1.5;
 let frames = 0;
 let obstacleCount = 1;
 
-// Handle keyboard input
+// Handle keyboard input for desktop
 document.addEventListener('keydown', (event) => {
-    if (event.code === 'ArrowUp') player.isFloating = true;
-    if (event.code === 'ArrowLeft') player.movingLeft = true;
-    if (event.code === 'ArrowRight') player.movingRight = true;
+    if (event.code === 'ArrowUp') player.isFloating = true; // Jump
+    if (event.code === 'ArrowLeft') player.movingLeft = true; // Move left
+    if (event.code === 'ArrowRight') player.movingRight = true; // Move right
 });
 document.addEventListener('keyup', (event) => {
-    if (event.code === 'ArrowUp') player.isFloating = false;
-    if (event.code === 'ArrowLeft') player.movingLeft = false;
-    if (event.code === 'ArrowRight') player.movingRight = false;
+    if (event.code === 'ArrowUp') player.isFloating = false; // Stop jumping
+    if (event.code === 'ArrowLeft') player.movingLeft = false; // Stop moving left
+    if (event.code === 'ArrowRight') player.movingRight = false; // Stop moving right
 });
 
 // Touch event listeners for mobile control
+let isTouchingLeft = false;
+let isTouchingRight = false;
+
 canvas.addEventListener('touchstart', handleTouchStart, false);
 canvas.addEventListener('touchmove', handleTouchMove, false);
-let touchStartX = 0;
+canvas.addEventListener('touchend', handleTouchEnd, false);
+
 function handleTouchStart(event) {
-    const firstTouch = event.touches[0];
-    touchStartX = firstTouch.clientX;
-}
-function handleTouchMove(event) {
+    event.preventDefault();
     const touchX = event.touches[0].clientX;
-    if (touchX < touchStartX && player.x > 0) player.x -= player.speed;
-    if (touchX > touchStartX && player.x + player.width < canvas.width) player.x += player.speed;
-    touchStartX = touchX;
+
+    if (touchX < canvas.width / 2) {
+        isTouchingLeft = true;
+        player.movingLeft = true;
+    } else {
+        isTouchingRight = true;
+        player.movingRight = true;
+    }
 }
+
+function handleTouchMove(event) {
+    event.preventDefault();
+    const touchX = event.touches[0].clientX;
+
+    if (touchX < canvas.width / 2) {
+        player.movingLeft = true;
+        player.movingRight = false;
+    } else {
+        player.movingRight = true;
+        player.movingLeft = false;
+    }
+}
+
+function handleTouchEnd() {
+    isTouchingLeft = false;
+    isTouchingRight = false;
+    player.movingLeft = false;
+    player.movingRight = false;
+}
+
+// Allow tap to jump on mobile
+canvas.addEventListener('touchstart', (event) => {
+    if (event.touches.length === 1) {
+        player.isFloating = true; // Jump when tapping the screen
+    }
+});
+canvas.addEventListener('touchend', () => {
+    player.isFloating = false;
+});
 
 // Function to create obstacles
 function createObstacle() {
@@ -214,7 +252,9 @@ function resizeCanvas() {
     const maxCanvasHeight = 1600;
     canvas.width = Math.min(window.innerWidth, maxCanvasWidth);
     canvas.height = Math.min(window.innerHeight, maxCanvasHeight);
-    player.width = canvas.width * 0.1;
+    player.width = canvas
+
+.width * 0.1;
     player.height = canvas.width * 0.1;
 }
 window.addEventListener('resize', resizeCanvas);
